@@ -1,0 +1,1 @@
+# pip install beautifulsoup requests pandas openpyxl random selenium webdriver_manager undetected-chromedriver
