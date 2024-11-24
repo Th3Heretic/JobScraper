@@ -1,33 +1,26 @@
-import requests
-from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.options import Options
 import pandas as pd
 import time
-import random
 
-USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0',
-]
 
-time.sleep(2)  # 2-second delay
+def scrape_job_firefox(url):
+    # Set up Firefox options for lightweight operation
+    options = Options()
+    options.headless = False  # Set to True for headless mode (no browser window)
 
-def scrape_job(url):
+    # Initialize Firefox WebDriver
+    driver = webdriver.Firefox(service=Service(), options=options)
+    driver.get(url)
+    time.sleep(3)  # Allow page to load
+
     try:
-        # Fetch the webpage
-        headers = {
-            'User-Agent': random.choice(USER_AGENTS)
-        }
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()  # Raise error for bad status
-
-        # Parse HTML
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        # Extract job details (LinkedIn structure)
-        job_title = soup.find('h1', {'class': 'topcard__title'}).get_text(strip=True)
-        company_name = soup.find('a', {'class': 'topcard__org-name-link'}).get_text(strip=True)
-        location = soup.find('span', {'class': 'topcard__flavor topcard__flavor--bullet'}).get_text(strip=True)
+        # Extract job details
+        job_title = driver.find_element(By.CSS_SELECTOR, 'h1.topcard__title').text
+        company_name = driver.find_element(By.CSS_SELECTOR, 'a.topcard__org-name-link').text
+        location = driver.find_element(By.CSS_SELECTOR, 'span.topcard__flavor--bullet').text
 
         return {
             'Job Title': job_title,
@@ -38,6 +31,9 @@ def scrape_job(url):
     except Exception as e:
         print(f"Error scraping {url}: {e}")
         return None
+    finally:
+        driver.quit()
+
 
 def save_to_excel(data, filename='job_listings.xlsx'):
     try:
@@ -47,9 +43,10 @@ def save_to_excel(data, filename='job_listings.xlsx'):
     except Exception as e:
         print(f"Error saving to Excel: {e}")
 
+
 # Main execution
 if __name__ == "__main__":
-    job_url = input("Enter LinkedIn job posting URL: ")
-    job_data = scrape_job(job_url)
+    job_url = input("Enter the LinkedIn job posting URL: ")
+    job_data = scrape_job_firefox(job_url)
     if job_data:
         save_to_excel([job_data])
