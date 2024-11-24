@@ -9,7 +9,7 @@ import time
 def scrape_job_firefox(url):
     # Set up Firefox options for lightweight operation
     options = Options()
-    options.headless = False  # Set to True for headless mode (no browser window)
+    options.headless = True  # Set to True for headless mode (no browser window)
 
     # Initialize Firefox WebDriver
     driver = webdriver.Firefox(service=Service(), options=options)
